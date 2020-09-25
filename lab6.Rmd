@@ -1,0 +1,106 @@
+---
+title: "Lab 6"
+author: ""
+date: ""
+output: 
+  html_document:
+    css: lab6.css
+    toc: true
+    number_sections: false
+    toc_float: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,
+                      message = FALSE, warning = FALSE, comment = NA,
+                      fig.width=8, fig.height=6)
+```
+
+## Introduction
+
+On May 20, 2013 an extremely powerful and devastating tornado struck
+Moore, Oklahoma, a city just south of Oklahoma City. The tornado was over one
+mile wide and had a maximum wind speed of 210 mph. This area is a known hotbed 
+for tornadic activity. In fact, the 2013 Moore tornado followed a very similar 
+path as two other large tornadoes that hit the area in 1999 and 2003, 
+respectively.
+
+In this lab we'll scrape and wrangle tornado data provided by the Tornado
+History Project.
+
+## Packages
+
+```{r}
+library(tidyverse)
+library(rvest)
+library(janitor)
+```
+
+## Scrape data
+
+#### Step 1
+
+<div class="bkgemph">
+Scrape data from http://www.tornadohistoryproject.com to get all
+tornadoes recorded in Oklahoma in 1998. Your result should be a data frame 
+object named `tor_1998`. Hint: make use of selector gadget and
+`html_table()`. In step 2 you can focus on cleaning up the data frame.
+</div>
+
+```{r tornadoes_1998}
+
+```
+
+#### Step 2
+
+<div class="bkgemph">
+Clean up `tor_1998` by removing the rows with header information, fix the
+variable names with `janitor::clean_names()`, and only keep columns
+`spc_number:lift_lon`.
+</div>
+
+```{r clean_tornadoes}
+
+```
+
+#### Step 3
+
+<div class="bkgemph">
+Use your code from steps 1 and 2 to now create a function named 
+`get_tornadoes()`. The function should have a single argument, `year`. Your
+function should be able to scrape the tornado data for any year from 1998 to 
+2017 and output the cleaned data frame.
+</div>
+
+```{r get_tornadoes}
+
+```
+
+#### Step 4
+
+<div class="bkgemph">
+Use your function `get_tornadoes()` to scrape all the tornado data from 1998 to
+2017. Choose a `map` function that will do this with one line of code and 
+result in a single data frame. Name the resulting data frame `ok_tornadoes`.
+</div>
+
+```{r get_all_tornadoes}
+
+```
+
+## Visualize data
+
+<div class="bkgemph">
+Use `ok_tornadoes` to create a visualization. You may need to further
+clean up the variables as there are special characters in the data. For example,
+`fujita` has some `?` present.
+</div>
+
+
+
+## References
+
+1. Tornado History Project: Maps and Statistics . (2020). 
+   Tornadohistoryproject.com. Retrieved 1 June 2020, from
+   http://www.tornadohistoryproject.com/
