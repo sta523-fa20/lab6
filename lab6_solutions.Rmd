@@ -1,0 +1,159 @@
+---
+title: "Lab 6 Solutions"
+author: ""
+date: ""
+output: 
+  html_document:
+    css: lab6.css
+    toc: true
+    number_sections: false
+    toc_float: true
+    df_print: paged
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,
+                      message = FALSE, warning = FALSE, comment = NA,
+                      fig.width=8, fig.height=6)
+```
+
+## Introduction
+
+On May 20, 2013 an extremely powerful and devastating tornado struck
+Moore, Oklahoma, a city just south of Oklahoma City. The tornado was over one
+mile wide and had a maximum wind speed of 210 mph. This area is a known hotbed 
+for tornadic activity. In fact, the 2013 Moore tornado followed a very similar 
+path as two other large tornadoes that hit the area in 1999 and 2003, 
+respectively.
+
+In this lab we'll scrape and wrangle tornado data provided by the Tornado
+History Project.
+
+## Packages
+
+```{r}
+library(tidyverse)
+library(rvest)
+library(janitor)
+library(sf)
+library(mapview)
+```
+
+## Scrape data
+
+#### Step 1
+
+<div class="bkgemph">
+Scrape data from http://www.tornadohistoryproject.com to get all
+tornadoes recorded in Oklahoma in 1998. Your result should be a data frame 
+object named `tor_1998`. Hint: make use of selector gadget and
+`html_table()`. In step 2 you can focus on cleaning up the data frame.
+</div>
+
+```{r tornadoes_1998}
+url <- "http://www.tornadohistoryproject.com/tornado/Oklahoma/1998/table"
+tor_1998_html <- read_html(url)
+
+tor_1998 <- tor_1998_html %>% 
+  html_nodes("#results") %>% 
+  html_table() %>% 
+  .[[1]]
+```
+
+#### Step 2
+
+<div class="bkgemph">
+Clean up `tor_1998` by removing the rows with header information, fix the
+variable names with `janitor::clean_names()`, and only keep columns
+`spc_number:lift_lon`.
+</div>
+
+```{r clean_tornadoes}
+names(tor_1998) <- tor_1998[1, ]
+
+tor_1988_clean <- tor_1998 %>% 
+  filter(Date != "Date") %>% 
+  clean_names() %>% 
+  select(spc_number:lift_lon) %>% 
+  as_tibble()
+```
+
+#### Step 3
+
+<div class="bkgemph">
+Use your code from steps 1 and 2 to now create a function named 
+`get_tornadoes()`. The function should have a single argument, `year`. Your
+function should be able to scrape the tornado data for any year from 1998 to 
+2017 and output the cleaned data frame.
+</div>
+
+```{r get_tornadoes}
+get_tornadoes <- function(year) {
+  base_url <- "http://www.tornadohistoryproject.com/tornado/Oklahoma/"
+  url <- str_c(base_url, year, "/table")
+  
+  tor_html <- read_html(url)
+  
+  tor <- tor_html %>% 
+    html_nodes("#results") %>% 
+    html_table() %>% 
+    .[[1]]  
+  
+  names(tor) <- tor[1, ]
+
+  tor %>% 
+    filter(Date != "Date") %>% 
+    janitor::clean_names() %>% 
+    select(date:lift_lon) %>% 
+    as_tibble()
+}
+```
+
+#### Step 4
+
+<div class="bkgemph">
+Use your function `get_tornadoes()` to scrape all the tornado data from 1998 to
+2017. Choose a `map` function that will do this with one line of code and 
+result in a single data frame. Name the resulting data frame `ok_tornadoes`.
+</div>
+
+```{r get_all_tornadoes}
+ok_tornadoes <- map_df(1998:2017, get_tornadoes)
+```
+
+## Visualize data
+
+<div class="bkgemph">
+Use `ok_tornadoes` to create a visualization. You may need to further
+clean up the variables as there are special characters in the data. For example,
+`fujita` has some `?` present.
+</div>
+
+**Answers will vary**
+
+```{r create_sf_object}
+# create a simple feature object, use touch data, EPSG = 4267
+ok_sf <- ok_tornadoes %>% 
+  select(-contains("lift")) %>% 
+  mutate(fujita = str_replace_all(fujita, pattern = "\\?", replacement = "0"),
+         fujita = factor(fujita)) %>% 
+  mutate_at(.vars = vars(contains("touch")), as.numeric) %>% 
+  st_as_sf(coords = c("touch_lon", "touch_lat")) %>% 
+  st_set_crs(value = 4267)
+```
+
+```{r visualize_tornadoes}
+# use mapview to create visualization
+mapviewOptions(legend.pos = "bottomleft")
+mapview(ok_sf, zcol = "fujita", layer.name = "Tornado Fujita Scale",
+        col.regions = c("#feedde", "#fdd0a2", "#fdae6b", "#fd8d3c", "#e6550d",
+                        "#a63603"),
+        cex = 4)
+```
+
+## References
+
+1. Tornado History Project: Maps and Statistics . (2020). 
+   Tornadohistoryproject.com. Retrieved 1 June 2020, from
+   http://www.tornadohistoryproject.com/
